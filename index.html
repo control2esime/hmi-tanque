@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>HMI Tanque</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      text-align: center;
+    }
+
+    .card {
+      background: #222;
+      padding: 20px;
+      margin: 20px;
+      border-radius: 10px;
+    }
+
+    h1 {
+      color: #00ffcc;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>HMI - Nivel de Tanque</h1>
+
+<div class="card">
+  <h2>Valor Actual</h2>
+  <div id="valor">Cargando...</div>
+</div>
+
+<div class="card">
+  <canvas id="grafica"></canvas>
+</div>
+
+<script>
+
+const url = "https://script.google.com/macros/s/AKfycbxbruxzNtTf-MtP5AxGH-DbqKRbem5HULg_a0YE7IGTbUgdQ0tfWUHSQEmApnPwevEE/exec";
+
+let chart;
+
+async function cargarDatos() {
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  const ult = data[data.length - 1];
+
+  document.getElementById("valor").innerHTML =
+    "Nivel: " + ult[1] + " cm<br>" +
+    "Volumen: " + ult[2] + " L<br>" +
+    "Llenado: " + ult[3] + " %";
+
+  const niveles = data.map(r => r[1]);
+  const tiempos = data.map(r => new Date(r[0]).toLocaleTimeString());
+
+  if(chart) chart.destroy();
+
+  chart = new Chart(document.getElementById("grafica"), {
+    type: 'line',
+    data: {
+      labels: tiempos,
+      datasets: [{
+        label: "Nivel (cm)",
+        data: niveles,
+        borderColor: "#00ffcc",
+        fill: false
+      }]
+    }
+  });
+}
+
+cargarDatos();
+setInterval(cargarDatos, 10000);
+
+</script>
+
+</body>
+</html>
