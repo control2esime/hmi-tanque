@@ -69,7 +69,7 @@ Cargando datos...
 <script>
 
 // URL DE APPS SCRIPT
-const url = "https://script.google.com/macros/s/AKfycbytx-5MJ6jSjGWVcb2XcFDUNm62UzIfE-Ve4N9UaTRihtGtpc27VleDFSAphxG7VzQ1/exec";
+const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTsPL1ju3grDOG3wyL-xgX2XsOb-aT7YmTkuHM207k0zYo_VRzDUVNgn7vzbIzzJ5Ky6kIMn8K4Ou4G/pub?gid=0&single=true&output=csv";
 
 
 let chart;
@@ -78,8 +78,12 @@ async function cargarDatos(){
 
 try{
 
-const response=await fetch(url);
-const data=await response.json();
+const response = await fetch(url);
+const text = await response.text();
+
+const filas = text.split("\n").map(r => r.split(","));
+
+  
 
 if(!data || data.length===0){
 
@@ -183,4 +187,5 @@ setInterval(cargarDatos,10000);
 </body>
 
 </html>
+
 
