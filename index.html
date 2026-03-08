@@ -1,76 +1,48 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-
 <meta charset="UTF-8">
 <title>HMI Tanque</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
 body{
-font-family:Arial;
+font-family: Arial;
+text-align:center;
 background:#111;
 color:white;
-text-align:center;
-margin:0;
 }
 
 h1{
-color:#00ffcc;
-margin-top:30px;
+margin-top:20px;
 }
 
-.card{
-background:#222;
-padding:20px;
-margin:20px;
-border-radius:10px;
-max-width:700px;
-margin-left:auto;
-margin-right:auto;
-}
-
-#valor{
-font-size:20px;
-line-height:1.6;
+.valor{
+font-size:40px;
+margin:10px;
 }
 
 canvas{
-max-width:100%;
+background:white;
+margin-top:20px;
 }
-
 </style>
-
 </head>
 
 <body>
 
-<h1>HMI - Nivel de Tanque</h1>
+<h1>HMI Tanque</h1>
 
-<div class="card">
+<div class="valor">Nivel: <span id="nivel">--</span></div>
+<div class="valor">Flujo: <span id="flujo">--</span></div>
+<div class="valor">Temp: <span id="temp">--</span></div>
 
-<h2>Valor Actual</h2>
-
-<div id="valor">
-Cargando datos...
-</div>
-
-</div>
-
-<div class="card">
-
-<canvas id="grafica"></canvas>
-
-</div>
+<canvas id="grafica" width="600" height="300"></canvas>
 
 <script>
 
-// URL DE APPS SCRIPT
-const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTsPL1ju3grDOG3wyL-xgX2XsOb-aT7YmTkuHM207k0zYo_VRzDUVNgn7vzbIzzJ5Ky6kIMn8K4Ou4G/pub?gid=0&single=true&output=csv";
-
+const url = "https://script.google.com/macros/s/AKfycbytx-5MJ6jSjGWVcb2XcFDUNm62UzIfE-Ve4N9UaTRihtGtpc27VleDFSAphxG7VzQ1/exec";
 
 let chart;
 
@@ -79,113 +51,73 @@ async function cargarDatos(){
 try{
 
 const response = await fetch(url);
-const text = await response.text();
+const data = await response.json();
 
-const filas = text.split("\n").map(r => r.split(","));
+const datosValidos = data.filter(f => f[1] !== "");
 
-  
+const labels = datosValidos.map(f => f[0]);
+const nivel = datosValidos.map(f => f[1]);
+const flujo = datosValidos.map(f => f[2]);
+const temp = datosValidos.map(f => f[3]);
 
-if(!data || data.length===0){
+const ultimo = datosValidos[datosValidos.length-1];
 
-document.getElementById("valor").innerHTML="Sin datos disponibles";
+document.getElementById("nivel").innerText = ultimo[1];
+document.getElementById("flujo").innerText = ultimo[2];
+document.getElementById("temp").innerText = ultimo[3];
 
-return;
+if(!chart){
 
-}
+const ctx = document.getElementById("grafica");
 
-// buscar último dato válido
-let ult=null;
-
-for(let i=data.length-1;i>=0;i--){
-
-if(data[i][1]!=="" && data[i][1]!=null){
-
-ult=data[i];
-break;
-
-}
-
-}
-
-if(!ult){
-
-document.getElementById("valor").innerHTML="Esperando datos del sensor...";
-
-return;
-
-}
-
-// mostrar valor actual
-document.getElementById("valor").innerHTML=
-
-"NIVEL: "+ult[1]+" cm<br>"+
-"VOLUMEN: "+ult[2]+" L<br>"+
-"LLENADO: "+ult[3]+" %";
-
-
-// limpiar datos vacíos
-const datosValidos=data.filter(r=>r[1]!=="" && r[1]!=null);
-
-const niveles=datosValidos.map(r=>r[1]);
-
-const tiempos=datosValidos.map(r=>new Date(r[0]).toLocaleTimeString());
-
-// recrear grafica
-if(chart) chart.destroy();
-
-chart=new Chart(
-
-document.getElementById("grafica"),
-
-{
+chart = new Chart(ctx,{
 type:'line',
-
 data:{
+labels:labels,
+datasets:[
+{
+label:'Nivel',
+data:nivel,
+borderWidth:2
+},
+{
+label:'Flujo',
+data:flujo,
+borderWidth:2
+},
+{
+label:'Temp',
+data:temp,
+borderWidth:2
+}
+]
+}
+});
 
-labels:tiempos,
+}else{
 
-datasets:[{
+chart.data.labels = labels;
+chart.data.datasets[0].data = nivel;
+chart.data.datasets[1].data = flujo;
+chart.data.datasets[2].data = temp;
 
-label:"Nivel (cm)",
+chart.update();
 
-data:niveles,
+}
 
-borderColor:"#00ffcc",
+}catch(e){
 
-tension:0.3,
-
-fill:false
-
-}]
+console.log(e);
 
 }
 
 }
 
-);
-
-}
-
-catch(error){
-
-document.getElementById("valor").innerHTML="Error cargando datos";
-
-console.error(error);
-
-}
-
-}
-
-// cargar datos
 cargarDatos();
 
-// actualizar cada 10 segundos
-setInterval(cargarDatos,10000);
+setInterval(cargarDatos,5000);
 
 </script>
 
 </body>
-
 </html>
-
-
